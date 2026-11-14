@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>留白 · Aurevny</title>
+<meta name="description" content="留白 —— 只放字的地方。">
+<style>
+  :root{
+    --bg:#FBFBF9; --bg-soft:#F4F4F1; --ink:#141414; --ink-2:#6E6E6A; --ink-3:#A9A9A3;
+    --line:rgba(20,20,20,.09); --line-soft:rgba(20,20,20,.055);
+    --card:#FFFFFF; --accent:#141414; --heart:#E5484D;
+    --shadow:0 12px 40px rgba(20,20,20,.08);
+    --serif:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  html[data-theme="dark"]{
+    --bg:#000000; --bg-soft:#0E0E0E; --ink:#EDEDED; --ink-2:#9A9A94; --ink-3:#5C5C58;
+    --line:rgba(255,255,255,.13); --line-soft:rgba(255,255,255,.07);
+    --card:#0A0A0A; --accent:#EDEDED; --shadow:0 12px 40px rgba(0,0,0,.6);
+  }
+  @media (prefers-color-scheme: dark){
+    html[data-theme="auto"]{
+      --bg:#000000; --bg-soft:#0E0E0E; --ink:#EDEDED; --ink-2:#9A9A94; --ink-3:#5C5C58;
+      --line:rgba(255,255,255,.13); --line-soft:rgba(255,255,255,.07);
+      --card:#0A0A0A; --accent:#EDEDED; --shadow:0 12px 40px rgba(0,0,0,.6);
+    }
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;
+    transition:background .4s ease,color .4s ease;padding:0 20px 90px}
+  ::selection{background:var(--ink);color:var(--bg)}
+  .wrap{max-width:620px;margin:0 auto}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:22px 0 6px}
+  .wordmark{font-size:13px;letter-spacing:.55em;font-weight:600;text-indent:.1em}
+  .wordmark small{display:block;letter-spacing:.32em;font-size:9px;color:var(--ink-3);font-weight:400;margin-top:3px}
+  .icon-btn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink-2);
+    width:34px;height:34px;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:.25s}
+  .icon-btn:hover{color:var(--ink);border-color:var(--ink-3)}
+  .icon-btn svg{width:16px;height:16px}
+
+  /* ---------- profile ---------- */
+  .profile{padding:34px 0 8px;text-align:left}
+  .avatar{width:64px;height:64px;border-radius:50%;background:var(--ink);color:var(--bg);
+    display:grid;place-items:center;font-family:var(--serif);font-size:26px;margin-bottom:16px}
+  .p-name{font-size:21px;font-weight:600;letter-spacing:.04em}
+  .p-sign{font-family:var(--serif);color:var(--ink-2);font-size:14.5px;margin-top:5px;letter-spacing:.06em}
+  .p-stats{display:flex;gap:22px;margin-top:16px;font-size:12.5px;color:var(--ink-3);letter-spacing:.08em}
+  .p-stats b{color:var(--ink);font-weight:600;font-size:13.5px;margin-right:4px}
+
+  /* ---------- composer ---------- */
+  .composer{margin-top:26px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0}
+  .composer-collapsed{display:flex;align-items:center;gap:12px;cursor:text;color:var(--ink-3);font-size:14.5px}
+  .composer-collapsed .mini-av{width:30px;height:30px;border-radius:50%;background:var(--bg-soft);
+    border:1px solid var(--line);display:grid;place-items:center;font-family:var(--serif);font-size:13px;color:var(--ink-2)}
+  .composer-form{display:none}
+  .composer.open .composer-collapsed{display:none}
+  .composer.open .composer-form{display:block;animation:fadeUp .35s ease both}
+  .composer textarea{width:100%;border:0;outline:0;resize:none;background:transparent;color:var(--ink);
+    font-family:var(--serif);font-size:17.5px;line-height:1.85;letter-spacing:.03em;min-height:96px}
+  .composer textarea::placeholder{color:var(--ink-3)}
+  .c-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .c-row input[type="text"]{border:1px solid var(--line);background:transparent;color:var(--ink);
+    border-radius:999px;padding:6px 13px;font-size:12.5px;outline:0;font-family:var(--sans)}
+  .c-row input[type="text"]:focus{border-color:var(--ink-3)}
+  .c-row input.w-mood{width:118px}.c-row input.w-img{flex:1;min-width:170px}.c-row input.w-tag{width:118px}
+  .chip{border:1px solid var(--line);background:transparent;color:var(--ink-2);border-radius:999px;
+    padding:6px 12px;font-size:12.5px;cursor:pointer;transition:.2s;font-family:var(--sans)}
+  .chip:hover{color:var(--ink)}
+  .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .c-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+  .c-hint{font-size:12px;color:var(--ink-3);letter-spacing:.05em}
+  .btn{appearance:none;border:0;cursor:pointer;border-radius:999px;padding:9px 22px;font-size:13.5px;
+    letter-spacing:.14em;transition:.25s;font-family:var(--sans)}
+  .btn-primary{background:var(--ink);color:var(--bg);font-weight:600}
+  .btn-primary:hover{opacity:.82}
+  .btn-primary:disabled{opacity:.35;cursor:default}
+  .btn-ghost{background:transparent;color:var(--ink-2)}
+  .btn-ghost:hover{color:var(--ink)}
+
+  /* ---------- tag filter ---------- */
+  .tags{display:none;gap:8px;flex-wrap:wrap;margin-top:22px}
+  .tags.show{display:flex}
+  .tags .chip.on{background:var(--ink);color:var(--bg)}
+
+  /* ---------- feed ---------- */
+  .day-sep{display:flex;align-items:baseline;gap:12px;margin:38px 0 4px;color:var(--ink-3)}
+  .day-sep .d1{font-family:var(--serif);font-size:15px;color:var(--ink-2);letter-spacing:.14em}
+  .day-sep .d2{font-size:11px;letter-spacing:.22em}
+  .day-sep .rule{flex:1;border-top:1px solid var(--line-soft);transform:translateY(-3px)}
+  .post{padding:20px 0 16px;border-bottom:1px solid var(--line-soft);animation:fadeUp .5s ease both}
+  .post-body{font-family:var(--serif);font-size:17.5px;line-height:1.95;letter-spacing:.035em;white-space:pre-wrap;word-break:break-word}
+  .post-img{margin-top:14px;border-radius:14px;overflow:hidden;border:1px solid var(--line-soft)}
+  .post-img img{width:100%;display:block;max-height:420px;object-fit:cover}
+  .post-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:13px;font-size:12px;color:var(--ink-3);letter-spacing:.09em}
+  .post-meta .tg{color:var(--ink-2)}
+  .post-actions{display:flex;align-items:center;gap:6px;margin-top:10px}
+  .act{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;cursor:pointer;
+    color:var(--ink-3);font-size:12.5px;padding:5px 8px;border-radius:8px;transition:.2s;font-family:var(--sans)}
+  .act:hover{color:var(--ink)}
+  .act svg{width:15px;height:15px;flex:none}
+  .act.liked{color:var(--heart)}
+  .act.liked svg path{fill:var(--heart);stroke:var(--heart)}
+  .act.del{margin-left:auto}
+  .act.del:hover{color:var(--heart)}
+  .empty{padding:80px 0;text-align:center;color:var(--ink-3);font-family:var(--serif);
+    font-size:16px;letter-spacing:.3em;line-height:2.2}
+  .foot{margin-top:56px;text-align:center;color:var(--ink-3);font-size:11px;letter-spacing:.34em;line-height:2.1}
+  .foot .f-serif{font-family:var(--serif);font-size:12.5px;letter-spacing:.5em}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ---------- share card overlay ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(10,10,10,.55);backdrop-filter:blur(8px);
+    display:none;place-items:center;z-index:50;padding:22px}
+  .overlay.show{display:grid}
+  .share-card{background:#FBFBF9;color:#141414;width:min(400px,92vw);border-radius:6px;
+    padding:44px 38px 34px;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:fadeUp .35s ease both}
+  .share-card .sc-top{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:10.5px;letter-spacing:.3em;color:#A9A9A3;border-bottom:1px solid rgba(20,20,20,.09);padding-bottom:16px}
+  .share-card .sc-body{font-family:var(--serif);font-size:20px;line-height:2.05;letter-spacing:.04em;
+    padding:30px 0 26px;white-space:pre-wrap;word-break:break-word}
+  .share-card .sc-meta{font-size:11.5px;color:#6E6E6A;letter-spacing:.14em;line-height:2}
+  .share-card .sc-foot{display:flex;justify-content:space-between;align-items:baseline;margin-top:22px;
+    border-top:1px solid rgba(20,20,20,.09);padding-top:16px}
+  .share-card .sc-name{font-family:var(--serif);font-size:14px;letter-spacing:.2em}
+  .share-card .sc-brand{font-size:10px;letter-spacing:.42em;color:#A9A9A3}
+  .overlay .ov-hint{position:absolute;bottom:96px;left:0;right:0;text-align:center;color:rgba(255,255,255,.75);
+    font-size:12px;letter-spacing:.24em}
+  .overlay #cardImg{display:none;width:min(400px,92vw);max-height:74vh;object-fit:contain;border-radius:6px;
+    box-shadow:0 30px 80px rgba(0,0,0,.35);animation:fadeUp .35s ease both}
+  .ov-actions{position:absolute;bottom:34px;left:0;right:0;display:flex;gap:12px;justify-content:center}
+  .ov-btn{appearance:none;cursor:pointer;border-radius:999px;padding:11px 26px;font-size:13.5px;letter-spacing:.14em;
+    border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-family:var(--sans);transition:.25s}
+  .ov-btn.primary{background:#fff;color:#111;border-color:#fff;font-weight:600}
+  .ov-btn:active{transform:scale(.97)}
+  .toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);
+    padding:10px 22px;border-radius:999px;font-size:13px;letter-spacing:.1em;opacity:0;pointer-events:none;transition:.3s;z-index:60}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (max-width:480px){
+    body{padding:0 16px 80px}
+    .post-body{font-size:16.5px}
+    .profile{padding-top:26px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="wordmark">留白<small>LIU&nbsp;BAI</small></div>
+    <button class="icon-btn" id="themeBtn" title="切换深浅" aria-label="切换深浅">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>
+      </svg>
+    </button>
+  </header>
+
+  <section class="profile">
+    <div class="avatar">A</div>
+    <div class="p-name">Aurevny</div>
+    <div class="p-sign">把喜欢的东西，一件一件做出来。</div>
+    <div class="p-stats">
+      <span><b id="statPosts">0</b>篇字</span>
+      <span><b id="statLikes">0</b>次被喜欢</span>
+      <span id="statSince">自 2026 年 11 月</span>
+    </div>
+  </section>
+
+  <section class="composer" id="composer">
+    <div class="composer-collapsed" id="composerBar">
+      <span class="mini-av">A</span><span>写点什么…</span>
+    </div>
+    <div class="composer-form">
+      <textarea id="cText" placeholder="写点什么…" maxlength="600"></textarea>
+      <div class="c-row" id="weatherRow">
+        <button class="chip" data-w="晴">晴</button>
+        <button class="chip" data-w="阴">阴</button>
+        <button class="chip" data-w="多云">多云</button>
+        <button class="chip" data-w="雨">雨</button>
+        <button class="chip" data-w="雪">雪</button>
+        <button class="chip" data-w="雾">雾</button>
+        <input class="w-mood" id="cMood" type="text" placeholder="心情（可空）" maxlength="8">
+      </div>
+      <div class="c-row">
+        <input class="w-tag" id="cTag" type="text" placeholder="#标签（可空）" maxlength="12">
+        <input class="w-img" id="cImg" type="text" placeholder="图片链接（可空）">
+      </div>
+      <div class="c-actions">
+        <span class="c-hint" id="cHint">只有作者能发布</span>
+        <span>
+          <button class="btn btn-ghost" id="cCancel">收起</button>
+          <button class="btn btn-primary" id="cPublish">发布</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <nav class="tags" id="tagBar"></nav>
+  <main id="feed"></main>
+
+  <footer class="foot">
+    <div class="f-serif">留白</div>
+    <div>LESS&nbsp;BUT&nbsp;BETTER</div>
+  </footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="share-card" id="shareCard"></div>
+  <img id="cardImg" alt="留白分享图">
+  <div class="ov-actions">
+    <button class="ov-btn primary" id="saveImgBtn">保存为图片</button>
+    <button class="ov-btn" id="closeOvBtn">关闭</button>
+  </div>
+  <div class="ov-hint" id="ovHint">生成一张图 · 发朋友圈用</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ================= 配置 =================
+   API 留空 = 本机模式（文案只存在这台设备的浏览器里）。
+   部署 liubai-api Worker 后，把地址填到这里即切换为云端模式。 */
+const CONFIG = { API: "" };
+const AUTHOR = "Aurevny";
+const LS_POSTS = "liubai.posts.v1", LS_LIKED = "liubai.liked.v1", LS_THEME = "liubai.theme.v1";
+
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const WEEK = ["日","一","二","三","四","五","六"];
+function dstr(ts){ const d = new Date(ts); return { y:d.getFullYear(), m:d.getMonth()+1, day:d.getDate(),
+  hh:String(d.getHours()).padStart(2,"0"), mm:String(d.getMinutes()).padStart(2,"0"), wk:WEEK[d.getDay()],
+  key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") }; }
+function dayLabel(ts){ const now = new Date(), d = new Date(ts);
+  const start = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((start(now) - start(d)) / 864e5), t = dstr(ts);
+  if (diff === 0) return ["今天", t.m + "月" + t.day + "日 · 星期" + t.wk];
+  if (diff === 1) return ["昨天", t.m + "月" + t.day + "日 · 星期" + t.wk];
+  return [t.m + "月" + t.day + "日", "星期" + t.wk + (t.y !== now.getFullYear() ? " · " + t.y + "年" : "")]; }
+let toastTimer;
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
+
+/* ================= 主题 ================= */
+(function initTheme(){
+  const saved = localStorage.getItem(LS_THEME);
+  if (saved) document.documentElement.dataset.theme = saved;
+  $("#themeBtn").addEventListener("click", () => {
+    const cur = document.documentElement.dataset.theme;
+    const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = cur === "dark" || (cur === "auto" && dark);
+    const next = isDark ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem(LS_THEME, next);
+  });
+})();
+
+/* ================= 数据层 ================= */
+const cloud = () => CONFIG.API.replace(/\/$/, "");
+let posts = [];
+let liked = new Set(JSON.parse(localStorage.getItem(LS_LIKED) || "[]"));
+const saveLiked = () => localStorage.setItem(LS_LIKED, JSON.stringify([...liked]));
+
+const SEEDS = [
+  { id:"seed-3", text:"新站开张。\n这里只放字，不放别的。", ts:Date.parse("2026-11-14T14:51:00+08:00"), weather:"雾", mood:"", tag:"留白", img:"", likes:0 },
+  { id:"seed-2", text:"哈尔滨的雾，早上起来，窗外什么都看不见。\n适合裹着被子，把歌调小声一点。", ts:Date.parse("2026-11-14T08:20:00+08:00"), weather:"雾", mood:"想睡了", tag:"日常", img:"", likes:0 },
+  { id:"seed-1", text:"把喜欢的东西，一件一件做出来。", ts:Date.parse("2026-11-13T22:40:00+08:00"), weather:"", mood:"平静", tag:"", img:"", likes:0 }
+];
+
+async function loadPosts(){
+  if (cloud()){
+    try {
+      const r = await fetch(cloud() + "/posts", { cache:"no-store" });
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      posts = Array.isArray(j.posts) ? j.posts : [];
+      return;
+    } catch(e){ /* 云端不可达时退回本机 */ }
+  }
+  const raw = localStorage.getItem(LS_POSTS);
+  posts = raw ? JSON.parse(raw) : structuredClone(SEEDS);
+  if (!raw) saveLocal();
+}
+const saveLocal = () => localStorage.setItem(LS_POSTS, JSON.stringify(posts));
+
+let sessionPass = "";
+async function authorPass(){
+  if (sessionPass) return sessionPass;
+  const p = prompt("作者口令（只有站长能发布 / 删除）：");
+  if (!p) return "";
+  sessionPass = p; return p;
+}
+async function api(path, opt){
+  const r = await fetch(cloud() + path, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+
+/* ================= 渲染 ================= */
+let activeTag = "";
+function allTags(){
+  const s = new Set(); posts.forEach(p => { if (p.tag) s.add(p.tag); }); return [...s];
+}
+function renderTags(){
+  const bar = $("#tagBar"), tags = allTags();
+  if (!tags.length){ bar.className = "tags"; bar.innerHTML = ""; return; }
+  bar.className = "tags show";
+  bar.innerHTML = tags.map(t =>
+    `<button class="chip ${t === activeTag ? "on" : ""}" data-tag="${esc(t)}"># ${esc(t)}</button>`).join("")
+    + (activeTag ? `<button class="chip" data-tag="">全部</button>` : "");
+  bar.querySelectorAll("[data-tag]").forEach(b => b.addEventListener("click", () => {
+    activeTag = b.dataset.tag; render();
+  }));
+}
+function renderStats(){
+  $("#statPosts").textContent = posts.length;
+  $("#statLikes").textContent = posts.reduce((a, p) => a + (p.likes || 0), 0);
+}
+const heartSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20.7C6.4 16.9 3 13.6 3 9.9 3 7.2 5.1 5 7.8 5c1.7 0 3.3.9 4.2 2.3C12.9 5.9 14.5 5 16.2 5 18.9 5 21 7.2 21 9.9c0 3.7-3.4 7-9 10.8z"/></svg>';
+const shareSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7l4-4 4 4"/><path d="M5 13v6a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-6"/></svg>';
+
+function render(){
+  renderTags(); renderStats();
+  const feed = $("#feed");
+  const list = posts.filter(p => !activeTag || p.tag === activeTag)
+                     .slice().sort((a, b) => b.ts - a.ts);
+  if (!list.length){
+    feed.innerHTML = `<div class="empty">尚 未 落 笔<br><span style="font-size:12px;letter-spacing:.4em">NOTHING&nbsp;YET</span></div>`;
+    return;
+  }
+  let html = "", lastKey = "";
+  for (const p of list){
+    const t = dstr(p.ts), [big, small] = dayLabel(p.ts);
+    if (t.key !== lastKey){
+      html += `<div class="day-sep"><span class="d1">${big}</span><span class="d2">${small}</span><span class="rule"></span></div>`;
+      lastKey = t.key;
+    }
+    const meta = [`${t.hh}:${t.mm}`, p.weather, p.mood].filter(Boolean).map(esc).join(" · ");
+    html += `<article class="post" data-id="${esc(p.id)}">
+      <div class="post-body">${esc(p.text)}</div>
+      ${p.img ? `<div class="post-img"><img src="${esc(p.img)}" alt="" loading="lazy" referrerpolicy="no-referrer"></div>` : ""}
+      <div class="post-meta"><span>${meta}</span>${p.tag ? `<span class="tg"># ${esc(p.tag)}</span>` : ""}</div>
+      <div class="post-actions">
+        <button class="act like ${liked.has(p.id) ? "liked" : ""}" data-act="like">${heartSVG}<span>${p.likes || 0}</span></button>
+        <button class="act" data-act="card">${shareSVG}<span>图片</span></button>
+        <button class="act del" data-act="del" title="删除">删除</button>
+      </div>
+    </article>`;
+  }
+  feed.innerHTML = html;
+  feed.querySelectorAll(".post").forEach(el => {
+    const id = el.dataset.id;
+    el.querySelector('[data-act="like"]').addEventListener("click", () => toggleLike(id));
+    el.querySelector('[data-act="card"]').addEventListener("click", () => openCard(id));
+    el.querySelector('[data-act="del"]').addEventListener("click", () => delPost(id));
+  });
+}
+
+async function toggleLike(id){
+  const p = posts.find(x => x.id === id); if (!p) return;
+  const has = liked.has(id);
+  if (cloud() && !String(id).startsWith("seed-")){
+    try {
+      const j = await api("/like", { method:"POST", headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ id, delta: has ? -1 : 1 }) });
+      p.likes = j.likes;
+    } catch(e){ toast("点赞没送出去，网络不太稳"); return; }
+  } else {
+    p.likes = Math.max(0, (p.likes || 0) + (has ? -1 : 1));
+    if (!cloud()) saveLocal();
+  }
+  has ? liked.delete(id) : liked.add(id);
+  saveLiked(); render();
+}
+
+async function delPost(id){
+  if (!confirm("删掉这一篇？")) return;
+  if (cloud() && !String(id).startsWith("seed-")){
+    const pass = await authorPass(); if (!pass) return;
+    try { await api("/posts/" + encodeURIComponent(id),
+      { method:"DELETE", headers:{ "X-Author-Pass": pass } }); }
+    catch(e){ sessionPass = ""; toast("删除失败：" + e.message); return; }
+  }
+  posts = posts.filter(p => p.id !== id);
+  if (!cloud()) saveLocal();
+  render(); toast("已删除");
+}
+
+/* ================= 分享图片 ================= */
+let cardPost = null;
+function openCard(id){
+  const p = posts.find(x => x.id === id); if (!p) return;
+  cardPost = p;
+  const t = dstr(p.ts);
+  const meta = [`${t.y} 年 ${t.m} 月 ${t.day} 日 · 星期${t.wk}`, p.weather, p.mood].filter(Boolean).join("　·　");
+  $("#shareCard").innerHTML = `
+    <div class="sc-top"><span>留 白</span><span>LIU BAI</span></div>
+    <div class="sc-body">${esc(p.text)}</div>
+    <div class="sc-meta">${esc(meta)}${p.tag ? `<br># ${esc(p.tag)}` : ""}</div>
+    <div class="sc-foot"><span class="sc-name">${esc(AUTHOR)}</span><span class="sc-brand">LESS BUT BETTER</span></div>`;
+  $("#shareCard").style.display = "";
+  $("#cardImg").style.display = "none";
+  $("#ovHint").textContent = "生成一张图 · 发朋友圈用";
+  $("#overlay").classList.add("show");
+}
+function closeCard(){ $("#overlay").classList.remove("show"); }
+$("#closeOvBtn").addEventListener("click", closeCard);
+$("#overlay").addEventListener("click", e => { if (e.target === $("#overlay")) closeCard(); });
+
+function wrapLines(ctx, text, maxW){
+  const out = [];
+  for (const para of String(text).split("\n")){
+    if (!para){ out.push(""); continue; }
+    let line = "";
+    for (const ch of para){
+      if (line && ctx.measureText(line + ch).width > maxW){ out.push(line); line = ch; }
+      else line += ch;
+    }
+    out.push(line);
+  }
+  return out;
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function loadImg(src){
+  return new Promise(res => {
+    const im = new Image();
+    im.crossOrigin = "anonymous";
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = src;
+  });
+}
+async function renderCardPNG(p){
+  const W = 1080, H = 1440, M = 108;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#FBFBF9"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#A9A9A3"; ctx.font = "30px sans-serif";
+  ctx.fillText("留 白", M, 128);
+  const brand = "L I U   B A I";
+  ctx.fillText(brand, W - M - ctx.measureText(brand).width, 128);
+  ctx.strokeStyle = "rgba(20,20,20,.12)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(M, 168); ctx.lineTo(W - M, 168); ctx.stroke();
+
+  let y = 258;
+  if (p.img){
+    const im = await loadImg(p.img);
+    if (im){
+      const ih = 500;
+      ctx.save(); roundRect(ctx, M, y, W - 2 * M, ih, 18); ctx.clip();
+      const scale = Math.max((W - 2 * M) / im.width, ih / im.height);
+      const dw = im.width * scale, dh = im.height * scale;
+      ctx.drawImage(im, M + (W - 2 * M - dw) / 2, y + (ih - dh) / 2, dw, dh);
+      ctx.restore();
+      y += ih + 64;
+    }
+  }
+  ctx.fillStyle = "#141414";
+  ctx.font = "54px 'Noto Serif SC','Songti SC','STSong',serif";
+  const lines = wrapLines(ctx, p.text, W - 2 * M);
+  const LH = 108;
+  for (const ln of lines){ ctx.fillText(ln, M, y + 54); y += LH; }
+
+  const t = dstr(p.ts);
+  const meta1 = [`${t.y} 年 ${t.m} 月 ${t.day} 日 · 星期${t.wk}`, p.weather, p.mood].filter(Boolean).join("　·　");
+  ctx.fillStyle = "#6E6E6A"; ctx.font = "30px sans-serif";
+  ctx.fillText(meta1, M, y + 44);
+  if (p.tag) ctx.fillText("# " + p.tag, M, y + 96);
+
+  ctx.strokeStyle = "rgba(20,20,20,.12)";
+  ctx.beginPath(); ctx.moveTo(M, H - 178); ctx.lineTo(W - M, H - 178); ctx.stroke();
+  ctx.fillStyle = "#141414"; ctx.font = "38px 'Noto Serif SC','Songti SC','STSong',serif";
+  ctx.fillText(AUTHOR, M, H - 106);
+  ctx.fillStyle = "#A9A9A3"; ctx.font = "24px sans-serif";
+  const foot = "L E S S   B U T   B E T T E R";
+  ctx.fillText(foot, W - M - ctx.measureText(foot).width, H - 106);
+
+  return new Promise(res => cv.toBlob(res, "image/png"));
+}
+$("#saveImgBtn").addEventListener("click", async () => {
+  if (!cardPost) return;
+  const btn = $("#saveImgBtn"); btn.disabled = true; btn.textContent = "生成中…";
+  try {
+    const blob = await renderCardPNG(cardPost);
+    if (!blob) throw new Error("生成失败");
+    const url = URL.createObjectURL(blob);
+    const img = $("#cardImg");
+    img.src = url; img.style.display = "block";
+    $("#shareCard").style.display = "none";
+    $("#ovHint").textContent = "长按图片保存到相册 · 再发朋友圈";
+    const a = document.createElement("a");
+    a.href = url; a.download = "留白-" + new Date(cardPost.ts).toISOString().slice(0, 10) + ".png";
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("图片好了");
+  } catch(e){ toast("生成失败，再试一次"); }
+  finally { btn.disabled = false; btn.textContent = "保存为图片"; }
+});
+
+/* ================= 发布 ================= */
+let weather = "";
+$("#weatherRow").querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", () => {
+  const on = b.classList.contains("on");
+  $("#weatherRow").querySelectorAll("[data-w]").forEach(x => x.classList.remove("on"));
+  weather = on ? "" : b.dataset.w; if (!on) b.classList.add("on");
+}));
+const composer = $("#composer");
+$("#composerBar").addEventListener("click", () => { composer.classList.add("open"); $("#cText").focus(); });
+$("#cCancel").addEventListener("click", () => composer.classList.remove("open"));
+$("#cPublish").addEventListener("click", async () => {
+  const text = $("#cText").value.trim();
+  if (!text){ toast("先写点什么"); return; }
+  const btn = $("#cPublish"); btn.disabled = true;
+  const draft = { text, weather, mood: $("#cMood").value.trim(),
+    tag: $("#cTag").value.trim().replace(/^#/, ""), img: $("#cImg").value.trim(), ts: Date.now(), likes: 0 };
+  try {
+    if (cloud()){
+      const pass = await authorPass(); if (!pass) throw new Error("需要作者口令");
+      const j = await api("/posts", { method:"POST",
+        headers:{ "Content-Type":"application/json", "X-Author-Pass": pass },
+        body: JSON.stringify(draft) });
+      posts.unshift(j.post);
+    } else {
+      draft.id = "local-" + Date.now().toString(36);
+      posts.unshift(draft); saveLocal();
+    }
+    $("#cText").value = ""; $("#cMood").value = ""; $("#cTag").value = ""; $("#cImg").value = "";
+    weather = ""; $("#weatherRow").querySelectorAll("[data-w]").forEach(x => x.classList.remove("on"));
+    composer.classList.remove("open"); activeTag = "";
+    render(); toast(cloud() ? "发布了" : "发布了（本机模式，部署云端后朋友可见）");
+  } catch(e){
+    if (String(e.message).includes("口令")) sessionPass = "";
+    toast("没发出去：" + e.message);
+  } finally { btn.disabled = false; }
+});
+$("#cHint").textContent = cloud() ? "只有作者能发布" : "本机模式 · 部署云端后朋友可见";
+
+/* ================= 启动 ================= */
+loadPosts().then(render);
+</script>
+</body>
+</html>
