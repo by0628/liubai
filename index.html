@@ -446,30 +446,27 @@ function loadImg(src){
 }
 async function renderCardPNG(p){
   const W = 1080, H = 1440, M = 108;
-  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const ctx = cv.getContext("2d");
-  ctx.fillStyle = "#FBFBF9"; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#A9A9A3"; ctx.font = "30px sans-serif";
+  /* 先把整张卡按「白色单色版」画到蒙版上（只取 alpha 当覆盖率），
+     最后逐像素按棋盘格奇偶分别落成黑 / 白——同一张透明 PNG，
+     在白底上只看得见黑字、在黑底上只看得见白字。 */
+  const mask = document.createElement("canvas"); mask.width = W; mask.height = H;
+  const ctx = mask.getContext("2d");
+  ctx.fillStyle = "#FFFFFF"; ctx.strokeStyle = "#FFFFFF";
+
+  ctx.font = "30px sans-serif";
+  ctx.globalAlpha = .62;
   ctx.fillText("留 白", M, 128);
   const brand = "L I U   B A I";
   ctx.fillText(brand, W - M - ctx.measureText(brand).width, 128);
-  ctx.strokeStyle = "rgba(20,20,20,.12)"; ctx.lineWidth = 1;
+  ctx.globalAlpha = .14; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(M, 168); ctx.lineTo(W - M, 168); ctx.stroke();
+  ctx.globalAlpha = 1;
 
-  let y = 258;
+  let y = 258, photo = null;
   if (p.img){
-    const im = await loadImg(p.img);
-    if (im){
-      const ih = 500;
-      ctx.save(); roundRect(ctx, M, y, W - 2 * M, ih, 18); ctx.clip();
-      const scale = Math.max((W - 2 * M) / im.width, ih / im.height);
-      const dw = im.width * scale, dh = im.height * scale;
-      ctx.drawImage(im, M + (W - 2 * M - dw) / 2, y + (ih - dh) / 2, dw, dh);
-      ctx.restore();
-      y += ih + 64;
-    }
+    photo = await loadImg(p.img);
+    if (photo) y += 500 + 64;
   }
-  ctx.fillStyle = "#141414";
   ctx.font = "54px 'Noto Serif SC','Songti SC','STSong',serif";
   const lines = wrapLines(ctx, p.text, W - 2 * M);
   const LH = 108;
@@ -477,19 +474,43 @@ async function renderCardPNG(p){
 
   const t = dstr(p.ts);
   const meta1 = [`${t.y} 年 ${t.m} 月 ${t.day} 日 · 星期${t.wk}`, p.weather, p.mood].filter(Boolean).join("　·　");
-  ctx.fillStyle = "#6E6E6A"; ctx.font = "30px sans-serif";
+  ctx.globalAlpha = .55; ctx.font = "30px sans-serif";
   ctx.fillText(meta1, M, y + 44);
   if (p.tag) ctx.fillText("# " + p.tag, M, y + 96);
 
-  ctx.strokeStyle = "rgba(20,20,20,.12)";
+  ctx.globalAlpha = .14;
   ctx.beginPath(); ctx.moveTo(M, H - 178); ctx.lineTo(W - M, H - 178); ctx.stroke();
-  ctx.fillStyle = "#141414"; ctx.font = "38px 'Noto Serif SC','Songti SC','STSong',serif";
+  ctx.globalAlpha = 1; ctx.font = "38px 'Noto Serif SC','Songti SC','STSong',serif";
   ctx.fillText(AUTHOR, M, H - 106);
-  ctx.fillStyle = "#A9A9A3"; ctx.font = "24px sans-serif";
+  ctx.globalAlpha = .62; ctx.font = "24px sans-serif";
   const foot = "L E S S   B U T   B E T T E R";
   ctx.fillText(foot, W - M - ctx.measureText(foot).width, H - 106);
+  ctx.globalAlpha = 1;
 
-  return new Promise(res => cv.toBlob(res, "image/png"));
+  /* 输出：透明底；配图原样画入，其余像素按奇偶落黑 / 白 */
+  const out = document.createElement("canvas"); out.width = W; out.height = H;
+  const octx = out.getContext("2d");
+  if (photo){
+    const ih = 500;
+    octx.save(); roundRect(octx, M, 258, W - 2 * M, ih, 18); octx.clip();
+    const scale = Math.max((W - 2 * M) / photo.width, ih / photo.height);
+    const dw = photo.width * scale, dh = photo.height * scale;
+    octx.drawImage(photo, M + (W - 2 * M - dw) / 2, 258 + (ih - dh) / 2, dw, dh);
+    octx.restore();
+  }
+  const md = ctx.getImageData(0, 0, W, H), od = octx.getImageData(0, 0, W, H);
+  const mp = md.data, op = od.data;
+  for (let yy = 0; yy < H; yy++){
+    for (let xx = 0; xx < W; xx++){
+      const i = (yy * W + xx) * 4, a = mp[i + 3];
+      if (!a) continue;
+      const dark = ((xx + yy) & 1) === 0;
+      op[i] = op[i + 1] = op[i + 2] = dark ? 0 : 255;
+      op[i + 3] = Math.min(255, Math.round(a * 1.55));
+    }
+  }
+  octx.putImageData(od, 0, 0);
+  return new Promise(res => out.toBlob(res, "image/png"));
 }
 $("#saveImgBtn").addEventListener("click", async () => {
   if (!cardPost) return;
@@ -501,7 +522,7 @@ $("#saveImgBtn").addEventListener("click", async () => {
     const img = $("#cardImg");
     img.src = url; img.style.display = "block";
     $("#shareCard").style.display = "none";
-    $("#ovHint").textContent = "长按图片保存到相册 · 再发朋友圈";
+    $("#ovHint").textContent = "长按保存 · 一张图自适应：白底黑字 / 黑底白字";
     const a = document.createElement("a");
     a.href = url; a.download = "留白-" + new Date(cardPost.ts).toISOString().slice(0, 10) + ".png";
     document.body.appendChild(a); a.click(); a.remove();
