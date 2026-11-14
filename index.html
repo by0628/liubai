@@ -190,7 +190,10 @@
         <input class="w-img" id="cImg" type="text" placeholder="图片链接（可空）">
       </div>
       <div class="c-actions">
-        <span class="c-hint" id="cHint">只有作者能发布</span>
+        <span>
+          <span class="c-hint" id="cHint">只有作者能发布</span>
+          <button class="btn btn-ghost" id="cPass" style="display:none;padding:9px 4px;font-size:12.5px">改口令</button>
+        </span>
         <span>
           <button class="btn btn-ghost" id="cCancel">收起</button>
           <button class="btn btn-primary" id="cPublish">发布</button>
@@ -224,7 +227,7 @@
 /* ================= 配置 =================
    API 留空 = 本机模式（文案只存在这台设备的浏览器里）。
    部署 liubai-api Worker 后，把地址填到这里即切换为云端模式。 */
-const CONFIG = { API: "" };
+const CONFIG = { API: "https://harmonious-fenglisu-95c216.netlify.app/api" };
 const AUTHOR = "Aurevny";
 const LS_POSTS = "liubai.posts.v1", LS_LIKED = "liubai.liked.v1", LS_THEME = "liubai.theme.v1";
 
@@ -544,6 +547,18 @@ $("#cPublish").addEventListener("click", async () => {
   } finally { btn.disabled = false; }
 });
 $("#cHint").textContent = cloud() ? "只有作者能发布" : "本机模式 · 部署云端后朋友可见";
+if (cloud()){
+  const cpBtn = $("#cPass"); cpBtn.style.display = "";
+  cpBtn.addEventListener("click", async () => {
+    const oldP = prompt("现在的口令："); if (!oldP) return;
+    const newP = prompt("新口令（至少 4 位）："); if (!newP) return;
+    try {
+      await api("/change-pass", { method:"POST", headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ oldPass: oldP, newPass: newP }) });
+      sessionPass = newP; toast("口令已更新，下次发布用新口令");
+    } catch(e){ toast("改口令失败：" + e.message); }
+  });
+}
 
 /* ================= 启动 ================= */
 loadPosts().then(render);
