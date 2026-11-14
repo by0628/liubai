@@ -446,12 +446,14 @@ function loadImg(src){
 }
 async function renderCardPNG(p){
   const W = 1080, H = 1440, M = 108;
-  /* 先把整张卡按「白色单色版」画到蒙版上（只取 alpha 当覆盖率），
-     最后逐像素按棋盘格奇偶分别落成黑 / 白——同一张透明 PNG，
-     在白底上只看得见黑字、在黑底上只看得见白字。 */
-  const mask = document.createElement("canvas"); mask.width = W; mask.height = H;
-  const ctx = mask.getContext("2d");
-  ctx.fillStyle = "#FFFFFF"; ctx.strokeStyle = "#FFFFFF";
+  /* 跟随当前深浅模式出图：深色 → 黑底白字，浅色 → 白底黑字。 */
+  const theme = document.documentElement.dataset.theme;
+  const dark = theme === "dark" || (theme === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const BG = dark ? "#000000" : "#FFFFFF", FG = dark ? "#FFFFFF" : "#000000";
+  const out = document.createElement("canvas"); out.width = W; out.height = H;
+  const ctx = out.getContext("2d");
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = FG; ctx.strokeStyle = FG;
 
   ctx.font = "30px sans-serif";
   ctx.globalAlpha = .62;
@@ -487,29 +489,15 @@ async function renderCardPNG(p){
   ctx.fillText(foot, W - M - ctx.measureText(foot).width, H - 106);
   ctx.globalAlpha = 1;
 
-  /* 输出：透明底；配图原样画入，其余像素按奇偶落黑 / 白 */
-  const out = document.createElement("canvas"); out.width = W; out.height = H;
-  const octx = out.getContext("2d");
+  /* 配图画到正文上方预留的位置 */
   if (photo){
     const ih = 500;
-    octx.save(); roundRect(octx, M, 258, W - 2 * M, ih, 18); octx.clip();
+    ctx.save(); roundRect(ctx, M, 258, W - 2 * M, ih, 18); ctx.clip();
     const scale = Math.max((W - 2 * M) / photo.width, ih / photo.height);
     const dw = photo.width * scale, dh = photo.height * scale;
-    octx.drawImage(photo, M + (W - 2 * M - dw) / 2, 258 + (ih - dh) / 2, dw, dh);
-    octx.restore();
+    ctx.drawImage(photo, M + (W - 2 * M - dw) / 2, 258 + (ih - dh) / 2, dw, dh);
+    ctx.restore();
   }
-  const md = ctx.getImageData(0, 0, W, H), od = octx.getImageData(0, 0, W, H);
-  const mp = md.data, op = od.data;
-  for (let yy = 0; yy < H; yy++){
-    for (let xx = 0; xx < W; xx++){
-      const i = (yy * W + xx) * 4, a = mp[i + 3];
-      if (!a) continue;
-      const dark = ((xx + yy) & 1) === 0;
-      op[i] = op[i + 1] = op[i + 2] = dark ? 0 : 255;
-      op[i + 3] = Math.min(255, Math.round(a * 1.55));
-    }
-  }
-  octx.putImageData(od, 0, 0);
   return new Promise(res => out.toBlob(res, "image/png"));
 }
 $("#saveImgBtn").addEventListener("click", async () => {
@@ -522,7 +510,7 @@ $("#saveImgBtn").addEventListener("click", async () => {
     const img = $("#cardImg");
     img.src = url; img.style.display = "block";
     $("#shareCard").style.display = "none";
-    $("#ovHint").textContent = "长按保存 · 一张图自适应：白底黑字 / 黑底白字";
+    $("#ovHint").textContent = "长按保存 · 按当前模式出图：深色黑卡 / 浅色白卡";
     const a = document.createElement("a");
     a.href = url; a.download = "留白-" + new Date(cardPost.ts).toISOString().slice(0, 10) + ".png";
     document.body.appendChild(a); a.click(); a.remove();
